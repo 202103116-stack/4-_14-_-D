@@ -80,9 +80,11 @@ svg .muted { fill: var(--muted); } svg .faint { fill: var(--faint); } svg .ink2 
 [data-gu] { cursor: pointer; }
 .dimmed { opacity: .18; }
 /* export */
-body.export { padding: 0; background: #fbfbfa; }
+body.export { padding: 0; margin: 0; background: #fbfbfa; }
 body.export .wrap { display: none; }
 #exportFrame { display: none; }
+body.bare #exportFrame { display: none !important; }
+body.bare #bareChart { display: block !important; background: #ffffff; }
 body.export #exportFrame { display: grid; width: 1600px; height: 900px; box-sizing: border-box; padding: 40px 56px 26px; grid-template-rows: auto 1fr auto; gap: 14px; background: #fbfbfa; }
 #exportFrame .eyebrow { font-size: 15px; }
 #exportFrame h1 { font-size: 36px; }
@@ -141,6 +143,7 @@ body.export #exportFrame { display: grid; width: 1600px; height: 900px; box-sizi
   <div><svg id="xChart"></svg></div>
   <footer><span id="xNote"></span><span>교육용 가공 데이터 · 기준일 2026-04-15 하루 · 14조 미션D</span></footer>
 </div>
+<svg id="bareChart" style="display:none"></svg>
 <div id="tip" hidden></div>
 
 <script>
@@ -301,10 +304,10 @@ function drawQuad(svg, W, H) {
 function drawRank(svg, W, H) {
   const rImp = shareRank("imp"), rSkip = shareRank("skip");
   const top = 64, bottom = 12, rowH = (H - top - bottom) / 25;
-  const xL = 470, xR = 830;
+  const xL = Math.round(W * 0.30), xR = Math.round(W * 0.52), sx = Math.round(W * 0.785);
   const Yr = r => top + (r - 0.5) * rowH;
-  el("rect", { x: 40, y: top, width: xR + 400 - 40, height: rowH * 5, rx: 8, class: "band" }, svg);
-  txt(svg, 52, top + 20, "상위5", { "font-size": 13, "font-weight": 700, class: "t-both" });
+  el("rect", { x: 20, y: top, width: sx - 50, height: rowH * 5, rx: 8, class: "band" }, svg);
+  txt(svg, 30, top + 20, "상위5", { "font-size": 13, "font-weight": 700, class: "t-both" });
   txt(svg, xL, 30, "보정 안 함", { "text-anchor": "end", "font-size": 18, "font-weight": 700, class: "muted" });
   txt(svg, xL, 50, "분모 결측을 비워 둔 비중", { "text-anchor": "end", "font-size": 13, class: "muted" });
   txt(svg, xR, 30, "보정함 (팀 확정)", { "font-size": 18, "font-weight": 700, class: "t-both" });
@@ -316,8 +319,8 @@ function drawRank(svg, W, H) {
     const { d, a, b } = r, dir = b < a ? "up" : b > a ? "down" : "flat", strong = strongOf(r);
     const g = el("g", { "data-gu": d.gu }, svg);
     const y1 = Yr(a), y2 = Yr(b), mx = (xL + xR) / 2;
-    el("rect", { x: 40, y: y1 - rowH / 2, width: xL - 40, height: rowH, class: "hit" }, g);
-    el("rect", { x: xR, y: y2 - rowH / 2, width: 400, height: rowH, class: "hit" }, g);
+    el("rect", { x: 20, y: y1 - rowH / 2, width: xL - 20, height: rowH, class: "hit" }, g);
+    el("rect", { x: xR, y: y2 - rowH / 2, width: sx - 40 - xR, height: rowH, class: "hit" }, g);
     el("path", { d: `M${xL},${y1} C${mx},${y1} ${mx},${y2} ${xR},${y2}`, fill: "none", class: "l-" + dir,
       "stroke-width": strong || state.sel === d.gu ? 3.5 : 1.6, "stroke-opacity": strong || state.sel === d.gu ? 1 : 0.55 }, g);
     el("circle", { cx: xL, cy: y1, r: 5, class: "f-" + dir + " surf-stroke", "stroke-width": 2 }, g);
@@ -330,21 +333,19 @@ function drawRank(svg, W, H) {
     dimIf(g, d.gu);
   });
   // side summary
-  const sx = 1265;
   const changed = DATA.rank_changed, same = D.filter(d => Math.abs(d.share - d.share_skip) < 1e-9);
   txt(svg, sx, top + 46, [[String(changed), { "font-size": 64, "font-weight": 700 }], [" / " + DATA.n_gu, { "font-size": 28, class: "muted" }]], {});
   txt(svg, sx, top + 78, "개 구의 비중 순위가 바뀌었다", { "font-size": 16, class: "ink2" });
   const movers = rows.map(r => r).filter(strongOf).sort((p, q) => Math.abs(q.a - q.b) - Math.abs(p.a - p.b));
-  txt(svg, sx, top + 130, "크게 움직인 구", { "font-size": 14, "font-weight": 700, class: "muted" });
-  movers.slice(0, 6).forEach((r, i) => {
+  txt(svg, sx, top + 122, "크게 움직인 구", { "font-size": 14, "font-weight": 700, class: "muted" });
+  movers.slice(0, 4).forEach((r, i) => {
     const dir = r.b < r.a ? "up" : "down";
-    txt(svg, sx, top + 160 + i * 28, [[(dir === "up" ? "▲ " : "▼ "), { class: "f-" + dir }], [r.d.gu + " ", { "font-weight": 700 }], [`${r.a}위 → ${r.b}위`, { class: "ink2" }]], { "font-size": 16 });
+    txt(svg, sx, top + 150 + i * 26, [[(dir === "up" ? "▲ " : "▼ "), { class: "f-" + dir }], [r.d.gu + " ", { "font-weight": 700 }], [`${r.a}위 → ${r.b}위`, { class: "ink2" }]], { "font-size": 16 });
   });
-  const ny = top + 160 + 6 * 28 + 30;
+  const ny = top + 150 + 4 * 26 + 22;
   txt(svg, sx, ny, "왜 움직였나", { "font-size": 14, "font-weight": 700, class: "muted" });
-  ["보정은 분모만 키운다(10대 결측은 0건).", "분모 결측이 있던 17개 구는 비중이", "내려가고, 결측이 없던 " + same.length + "개 구는", "비중이 그대로라 상대적으로 오른다."]
-    .forEach((s, i) => txt(svg, sx, ny + 28 + i * 24, s, { "font-size": 15, class: "ink2" }));
-  txt(svg, sx, ny + 28 + 4 * 24 + 12, [["▲", { class: "f-up" }], [" 상승  ", {}], ["▼", { class: "f-down" }], [" 하락  ", {}], ["●", { class: "f-flat" }], [" 그대로", {}]], { "font-size": 14, class: "ink2" });
+  ["보정은 분모만 키운다.", "(10대는 범위 안 결측 0건)", "분모 결측이 있던 17개 구는 비중이", "내려가고, 결측 없던 " + same.length + "개 구는", "그대로라 상대적으로 오른다."]
+    .forEach((s, i) => txt(svg, sx, ny + 26 + i * 22, s, { "font-size": 14, class: "ink2" }));
 }
 
 // ---------- chart: distribution ----------
@@ -447,6 +448,17 @@ function tipHTML(gu) {
 
 function boot() {
   const hash = location.hash.replace("#", "");
+  const bare = hash.match(/^bare-(\w+)-(\d+)x(\d+)$/);
+  if (bare) {
+    const [, key, w, h] = bare;
+    document.documentElement.setAttribute("data-theme", "light");
+    document.body.classList.add("export", "bare");
+    const svg = document.getElementById("bareChart");
+    svg.setAttribute("viewBox", `0 0 ${w} ${h}`);
+    svg.style.width = w + "px"; svg.style.height = h + "px";
+    CHARTS[key].draw(svg, +w, +h);
+    return;
+  }
   if (hash.startsWith("export-")) {
     EXPORT = true;
     const key = hash.slice(7), C = CHARTS[key];
