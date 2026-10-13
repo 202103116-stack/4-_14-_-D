@@ -1,0 +1,206 @@
+<title>정제 단계별 이슈 추적표</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: 16:9 slide — 왼쪽 단계별 색 구분 표, 오른쪽 A~E 해설 레일. 발표 자료용으로 밝은 단일 테마. */
+:root {
+  color-scheme: light;
+  --paper: #fbfbfa;
+  --ink: #1d2430;
+  --muted: #6b7280;
+  --faint: #c3c8cf;
+  --rule: #e3e6ea;
+  /* stage colors */
+  --s1: #5b6472;  --s1-bg: #eef0f3;  --s1-tint: #f6f7f8;
+  --s2: #2f5fb3;  --s2-bg: #e3ecfb;  --s2-tint: #f3f7fe;
+  --s3: #1f8a5b;  --s3-bg: #ddf3e8;  --s3-tint: #f1faf5;
+  /* highlight semantics */
+  --ok: #1f8a5b;  --ok-bg: #c9eedb;
+  --keep: #a86400; --keep-bg: #fde9c4;
+  --hot: #c2412d;  --hot-bg: #fbe0da;
+  --f-sans: "IBM Plex Sans KR", "Malgun Gothic", "Apple SD Gothic Neo", system-ui, sans-serif;
+  --f-num: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+body { background: var(--paper); color: var(--ink); font-family: var(--f-sans); padding-inline: 16px; padding-block: 16px; }
+.frame { overflow-x: auto; }
+.slide { width: 1600px; height: 900px; margin: 0 auto; box-sizing: border-box; padding: 40px 56px 28px; background: var(--paper);
+  display: grid; grid-template-rows: auto 1fr auto; gap: 20px; }
+
+header { display: grid; gap: 14px; }
+.eyebrow { font-size: 15px; font-weight: 600; letter-spacing: .08em; color: var(--muted); margin: 0 0 8px; }
+h1 { white-space: nowrap; font-size: 36px; font-weight: 700; margin: 0; letter-spacing: -.01em; text-wrap: balance; }
+h1 em { font-style: normal; color: var(--s3); }
+.legend { display: flex; gap: 22px; font-size: 15px; color: var(--ink); flex-wrap: wrap; }
+.legend span { display: inline-flex; align-items: center; gap: 8px; }
+.sw { width: 30px; height: 20px; border-radius: 4px; display: inline-grid; place-items: center; font: 600 12px var(--f-num); }
+.sw.ok { background: var(--ok-bg); color: var(--ok); box-shadow: inset 0 0 0 2px var(--ok); }
+.sw.keep { background: var(--keep-bg); color: var(--keep); box-shadow: inset 0 0 0 2px var(--keep); }
+.sw.hot { background: var(--hot-bg); color: var(--hot); }
+.sw.z { background: transparent; color: var(--faint); box-shadow: inset 0 0 0 1px var(--rule); }
+
+.body { display: grid; grid-template-columns: 1fr 380px; gap: 32px; min-height: 0; }
+
+table { width: 100%; border-collapse: separate; border-spacing: 0; font-variant-numeric: tabular-nums; }
+th, td { text-align: center; }
+thead .stage th { font-size: 17px; font-weight: 700; color: #fff; padding: 10px 8px; position: relative; }
+thead .stage th.blank { background: transparent; }
+.st1 { background: var(--s1); border-radius: 10px 10px 0 0; }
+.st2 { background: var(--s2); border-radius: 10px 10px 0 0; }
+.st3 { background: var(--s3); border-radius: 10px 10px 0 0; }
+.stage small { display: block; font-weight: 500; font-size: 13px; opacity: .85; margin-top: 2px; }
+thead .sub th { font-size: 13.5px; font-weight: 600; padding: 8px 4px; line-height: 1.25; }
+.sub .c1 { background: var(--s1-bg); color: var(--s1); }
+.sub .c2 { background: var(--s2-bg); color: var(--s2); }
+.sub .c3 { background: var(--s3-bg); color: var(--s3); }
+.gap { width: 14px; padding: 0 !important; background: transparent !important; }
+
+tbody th { text-align: left; font-size: 16px; font-weight: 600; padding: 0 14px 0 4px; white-space: nowrap; border-bottom: 1px solid var(--rule); }
+tbody th.child { font-weight: 500; color: var(--muted); padding-left: 22px; }
+tbody tr.ref th, tbody tr.ref td { color: var(--muted); font-weight: 500; border-bottom: 2px solid var(--faint); }
+tbody tr.ref th small { font-weight: 500; font-size: 12px; margin-left: 6px; }
+tbody td { font: 500 19px var(--f-num); height: 45px; padding: 0 6px; border-bottom: 1px solid var(--rule); position: relative; }
+tbody td.c1 { background: var(--s1-tint); }
+tbody td.c2 { background: var(--s2-tint); }
+tbody td.c3 { background: var(--s3-tint); }
+td.in { font-weight: 600; }
+td.z { color: var(--faint); font-weight: 500; }
+td.dot { color: var(--faint); }
+.pill { display: inline-grid; place-items: center; min-width: 54px; height: 34px; padding: 0 8px; border-radius: 8px; box-sizing: border-box; }
+td.ok .pill { background: var(--ok-bg); color: var(--ok); box-shadow: inset 0 0 0 2px var(--ok); font-weight: 600; }
+td.keep .pill { background: var(--keep-bg); color: var(--keep); box-shadow: inset 0 0 0 2px var(--keep); font-weight: 600; }
+td.hot .pill { background: var(--hot-bg); color: var(--hot); font-weight: 600; }
+.badge { position: absolute; top: 3px; right: 3px; width: 19px; height: 19px; border-radius: 50%; background: var(--ink); color: #fff;
+  font: 700 11.5px/19px var(--f-sans); text-align: center; }
+.flow { font: 600 13px var(--f-sans); color: var(--muted); }
+
+aside { display: flex; flex-direction: column; gap: 9px; min-width: 0; }
+aside h2 { font-size: 15px; font-weight: 700; letter-spacing: .08em; color: var(--muted); margin: 0 0 2px; }
+.note { display: grid; grid-template-columns: 26px 1fr; gap: 12px; align-items: start; padding: 9px 14px; border-radius: 10px; background: #fff; border: 1px solid var(--rule); }
+.note b.k { width: 26px; height: 26px; border-radius: 50%; background: var(--ink); color: #fff; display: grid; place-items: center; font-size: 13px; }
+.note p { margin: 0; font-size: 14px; line-height: 1.45; }
+.note p strong { font-weight: 700; }
+.note .t { display: block; font-weight: 700; font-size: 15.5px; margin-bottom: 3px; }
+.note.ok { border-color: var(--ok); }
+.note.keep { border-color: var(--keep); }
+.note .t.ok { color: var(--ok); } .note .t.keep { color: var(--keep); } .note .t.hot { color: var(--hot); }
+.eq { font-family: var(--f-num); font-weight: 600; background: var(--keep-bg); padding: 1px 6px; border-radius: 4px; white-space: nowrap; }
+
+footer { display: flex; justify-content: space-between; gap: 24px; font-size: 13px; color: var(--muted); border-top: 1px solid var(--rule); padding-top: 12px; }
+footer code { font-family: var(--f-num); color: var(--ink); }
+</style>
+
+<div class="frame">
+<div class="slide">
+  <header>
+    <div>
+      <p class="eyebrow">STEP④ 정제 · 이슈별 건수 단계별 추적 · 범위 = 15·16·17시</p>
+      <h1>범위 안 문제는 <em>모두 0건</em>으로, 범위 밖은 이유를 남기고 그대로</h1>
+    </div>
+    <div class="legend">
+      <span><i class="sw ok">0</i>정제로 해결</span>
+      <span><i class="sw keep">18</i>범위 밖 · 의도적으로 유지</span>
+      <span><i class="sw hot">7</i>결과를 왜곡하는 값</span>
+      <span><i class="sw z">0</i>원래 없음</span>
+    </div>
+  </header>
+
+  <div class="body">
+    <table id="t">
+      <thead>
+        <tr class="stage">
+          <th class="blank"></th>
+          <th colspan="3" class="st1">① 원본<small>3,860행</small></th>
+          <th class="gap"></th>
+          <th colspan="3" class="st2">② 중복 제거 후<small>3,600행 · 260행 제거</small></th>
+          <th class="gap"></th>
+          <th colspan="3" class="st3">③ 정제 후 (잔여)<small>음수 복원 · 범위 안 결측 보정</small></th>
+        </tr>
+        <tr class="sub">
+          <th class="blank" style="text-align:left;padding-left:4px;color:var(--muted)">이슈</th>
+          <th class="c1">전체</th><th class="c1">범위<br>전 연령(분모)</th><th class="c1">범위<br>10대(분자)</th>
+          <th class="gap"></th>
+          <th class="c2">전체</th><th class="c2">범위<br>전 연령(분모)</th><th class="c2">범위<br>10대(분자)</th>
+          <th class="gap"></th>
+          <th class="c3">전체</th><th class="c3">범위<br>전 연령(분모)</th><th class="c3">범위<br>10대(분자)</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <aside>
+      <h2>읽는 법</h2>
+      <div class="note"><b class="k">A</b><p><span class="t hot">중복 7행이 10대 합계를 부풀림</span>범위 안 10대 중복 7행을 지우지 않으면 절대(10대 합계)가 그만큼 커집니다. 제거 후 75행 = 25구 × 3시간대로 기대값과 일치.</p></div>
+      <div class="note"><b class="k">B</b><p><span class="t">10대 결측은 처음부터 0건</span>빈칸·<code>'-'</code> 모두 범위 안 10대는 0건이라 절대(분자)는 보정할 것이 없습니다. 10대 <code>'-'</code> 35건은 전부 범위 밖.</p></div>
+      <div class="note ok"><b class="k">C</b><p><span class="t ok">분모 결측 22건 → 0건</span>빈칸 13 + <code>'-'</code> 9건이 비중의 분모(전 연령)에 있어, 같은 구·연령대의 15~17시 평균으로 보정했습니다. 안 하면 비중이 부풀려집니다.</p></div>
+      <div class="note keep"><b class="k">D</b><p><span class="t keep">남은 결측 159건은 전부 범위 밖</span><span class="eq">180 − 22 + 1 = 159</span> (−9990을 결측으로 바꾼 1건 포함). 결과에 쓰이지 않아 추정값으로 채우지 않았습니다.</p></div>
+      <div class="note keep"><b class="k">E</b><p><span class="t keep">동대문구 새벽 고값 18건은 수정 안 함</span>2~4시에만 있는 단위 오류 추정값. 15~17시 밖이라 절대·비중 어디에도 영향이 없어 그대로 둡니다.</p></div>
+    </aside>
+  </div>
+
+  <footer>
+    <span><code>·</code> 숫자 변환 후에는 빈칸과 <code>'-'</code>를 구분할 수 없어 따로 세지 않음(결측 합계 줄로 확인) &nbsp;|&nbsp; <code>0</code> 센 결과 남은 게 없음</span>
+    <span>데이터: 교육용 가공 데이터(오류 의도 삽입), 기준일 2026-04-15 하루 · 14조 미션D</span>
+  </footer>
+</div>
+</div>
+
+<script>
+// [이슈, 하위행 여부, ①전체, ①범위, ①10대, ②전체, ②범위, ②10대, ③전체, ③범위, ③10대]  — logs/정제로그.md 5절과 동일
+const rows = [
+  ["(참고) 행 수", "ref", 3860, 485, 82, 3600, 450, 75, 3600, 450, 75],
+  ["완전 중복 행(2회째)", "", 260, 35, 7, 0, 0, 0, 0, 0, 0],
+  ["결측 합계", "", 195, 27, 0, 180, 22, 0, 159, 0, 0],
+  ["└ 빈칸", "child", 95, 15, 0, 89, 13, 0, "·", "·", "·"],
+  ["└ '-'", "child", 100, 12, 0, 91, 9, 0, "·", "·", "·"],
+  ["음수(부호 오류 추정)", "", 23, 2, 0, 22, 2, 0, 0, 0, 0],
+  ["특수코드 −9990", "", 2, 0, 0, 1, 0, 0, 0, 0, 0],
+  ["고값(>10만, 동대문 새벽)", "", 19, 0, 0, 18, 0, 0, 18, 0, 0],
+  ["콤마 포함(형식)", "", 360, 50, 6, 338, 47, 5, 0, 0, 0],
+];
+// 강조 셀: [행, 열(0~8)] → 종류 · 배지
+const marks = {
+  "1,2": ["hot", "A"],
+  "2,2": ["", "B"],
+  "2,7": ["ok", "C"],
+  "2,6": ["keep", "D"],
+  "7,6": ["keep", "E"],
+};
+const fmt = v => typeof v === "number" ? v.toLocaleString("ko-KR") : v;
+const tb = document.querySelector("#t tbody");
+rows.forEach((r, ri) => {
+  const [label, kind, ...vals] = r;
+  const tr = document.createElement("tr");
+  if (kind === "ref") tr.className = "ref";
+  const th = document.createElement("th");
+  th.textContent = label;
+  if (kind === "child") th.className = "child";
+  if (kind === "ref") th.innerHTML = '(참고) 행 수<small>기대값 3,600 / 450 / 75</small>';
+  tr.appendChild(th);
+  vals.forEach((v, ci) => {
+    if (ci === 3 || ci === 6) { const g = document.createElement("td"); g.className = "gap"; tr.appendChild(g); }
+    const td = document.createElement("td");
+    const stage = Math.floor(ci / 3) + 1, sub = ci % 3;
+    const cls = ["c" + stage];
+    let kindMark = "";
+    if (kind !== "ref") {
+      if (v === "·") cls.push("dot");
+      else if (v === 0) {
+        // 앞 단계에서 0이 아니었는데 이 단계에서 0이 됐으면 '정제로 해결'
+        if (stage > 1 && typeof vals[ci - 3] === "number" && vals[ci - 3] > 0) kindMark = "ok";
+        else cls.push("z");
+      } else {
+        if (sub > 0) cls.push("in");
+        if (stage === 3) kindMark = "keep";
+      }
+    }
+    const m = marks[ri + "," + ci];
+    if (m && m[0]) kindMark = m[0];
+    if (kindMark) cls.push(kindMark);
+    td.className = cls.join(" ");
+    td.innerHTML = kindMark ? `<span class="pill">${fmt(v)}</span>` : fmt(v);
+    if (m) td.insertAdjacentHTML("beforeend", `<span class="badge">${m[1]}</span>`);
+    tr.appendChild(td);
+  });
+  tb.appendChild(tr);
+});
+</script>
