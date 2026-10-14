@@ -19,7 +19,9 @@
 - 팀원: 사용자 포함 3명(그중 데이터/분석 담당 박유진)
 - 진행 상태: STEP①②③까지 사실상 완료, **STEP④ 정제가 다음 핵심 과제** (아직 실제 정제 코드/결정 없음), STEP⑤ 결론·보고서·발표는 미작성
 - 실제 작업은 Google Colab에서 진행 중: https://colab.research.google.com/drive/1K5ZQAEKCVMOhvL37_QhWIikBJHytQNOx?usp=sharing
-- GitHub 백업 저장소(이 로컬 폴더의 origin): https://github.com/202103116-stack/4-_14-_-D
+- GitHub 백업 저장소(이 로컬 폴더의 origin): https://github.com/202103116-stack/youth-space-seoul-analysis
+  - 2026-10-14에 저장소 이름을 바꿈(옛 주소: https://github.com/202103116-stack/4-_14-_-D). 저장소·raw 파일 주소는 GitHub가 새 주소로 자동 연결해 주지만, **GitHub Pages(`202103116-stack.github.io/4-_14-_-D/...`)는 자동 연결되지 않아 404** — Pages 주소는 반드시 `https://202103116-stack.github.io/youth-space-seoul-analysis/...`를 쓸 것.
+  - 노트북 지도 셀은 아직 옛 raw 주소로 경계 파일을 받지만 자동 연결로 정상 동작함(공유 Colab과 맞추려고 그대로 둠).
 - **중요**: 이 로컬 폴더의 파일들(00_가설_질문정의.md, logs/*, report/*, slides/*, notebook/*.ipynb)은 4주차 킥오프 시점의 "틀(템플릿)"만 있고, Colab/Notion에서 이미 진행된 실제 결과(집계 수치, 그래프, 다듬어진 가설 해석)가 아직 반영되어 있지 않습니다. 작업 시 Notion/Colab 쪽 내용이 최신 — 로컬 파일을 결과물로 오인하지 말 것.
 
 ### 정제 전 1차 집계 (STEP③ 완료분 — Colab에서 이미 실행·확인됨)
