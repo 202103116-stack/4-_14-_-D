@@ -2,3 +2,6 @@
 __pycache__/
 *.pyc
 .ipynb_checkpoints/
+
+# Office 임시 잠금 파일 (파일을 열어둔 동안만 생김)
+~$*
