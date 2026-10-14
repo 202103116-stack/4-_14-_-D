@@ -72,6 +72,17 @@ const styles = {
       run: { font: font(HUFS_M), size: 19, bold: false, color: COLOR.text }, // 9.5pt 한국외대체 M
       paragraph: { alignment: AlignmentType.CENTER, spacing: { before: 60, after: 240, line: 276 } },
     },
+    // 목차 항목: 한 쪽에 들어가도록 간격을 줄임
+    {
+      id: 'TOC1', name: 'toc 1', basedOn: 'Normal', next: 'Normal',
+      run: { font: font(SERIF), size: 22 },
+      paragraph: { spacing: { before: 100, after: 20, line: 300 }, alignment: AlignmentType.LEFT },
+    },
+    {
+      id: 'TOC2', name: 'toc 2', basedOn: 'Normal', next: 'Normal',
+      run: { font: font(SERIF), size: 21 },
+      paragraph: { spacing: { before: 0, after: 20, line: 300 }, indent: { left: 400 }, alignment: AlignmentType.LEFT },
+    },
     {
       id: 'CoverTitle', name: '표지 제목', basedOn: 'Normal', quickFormat: true,
       run: { font: font(HUFS_B), size: 56, bold: false }, // 28pt 한국외대체 B
@@ -152,13 +163,24 @@ const numbering = {
 
 // ── 문단 도우미 ─────────────────────────────────────────
 // 인라인 **굵게** 를 TextRun으로 나눔
+// 인라인 **굵게** 와 `코드`(파일 경로·코드 조각)를 TextRun으로 나눔
+const CODE_FONT = { ascii: 'Consolas', hAnsi: 'Consolas', eastAsia: SANS, cs: 'Consolas' };
 function runs(text, opts = {}) {
-  const parts = String(text).split(/(\*\*[^*]+\*\*)/g).filter(Boolean);
-  return parts.map((p) => (p.startsWith('**') ? new TextRun({ text: p.slice(2, -2), bold: true, ...opts }) : new TextRun({ text: p, ...opts })));
+  const parts = String(text).split(/(\*\*[^*]+\*\*|`[^`]+`)/g).filter(Boolean);
+  return parts.map((p) => {
+    if (p.startsWith('**')) return new TextRun({ text: p.slice(2, -2), bold: true, ...opts });
+    if (p.startsWith('`')) {
+      const size = opts.size ? opts.size - 1 : 20;
+      return new TextRun({ ...opts, text: p.slice(1, -1), font: CODE_FONT, size, color: '24292F', shading: { type: ShadingType.CLEAR, color: 'auto', fill: 'EEF1F4' } });
+    }
+    return new TextRun({ text: p, ...opts });
+  });
 }
 const H = (level, text) => new Paragraph({ heading: `Heading${level}`, children: runs(text) });
 const P = (text, opts = {}) => new Paragraph({ children: runs(text), ...opts });
 const B = (text, level = 0) => new Paragraph({ numbering: { reference: 'bullet', level }, children: runs(text), alignment: AlignmentType.LEFT });
+// 표 바로 뒤에 본문이 올 때 띄우는 간격
+const GAP = () => new Paragraph({ spacing: { before: 0, after: 0, line: 200 }, children: [] });
 const NOTE = (text) => new Paragraph({ style: 'Note', children: runs('※ ' + text) });
 const SOURCE = (text) => new Paragraph({ style: 'Source', children: runs(text) });
 
@@ -173,19 +195,24 @@ const figureCaption = (title) => new Paragraph({
 });
 
 // 표: 위·아래 굵은 선, 안쪽 가는 선, 머리글 음영 (공공기관 표 양식)
-function table(headers, rows, widths, { align } = {}) {
+function table(headers, rows, widths, { align, size, keep } = {}) {
+  const ro = size ? { size } : {};
   const total = widths.reduce((a, b) => a + b, 0);
   const thin = { style: BorderStyle.SINGLE, size: 4, color: COLOR.rule };
   const thick = { style: BorderStyle.SINGLE, size: 12, color: '000000' };
-  const cell = (text, w, head, colIdx) => new TableCell({
+  // keep: 짧은 표를 쪽 경계에서 쪼개지 않게 행끼리 붙여 둠(마지막 행 제외 keepNext)
+  const together = !!keep;
+  const cell = (text, w, head, colIdx, keep) => new TableCell({
     width: { size: w, type: WidthType.DXA },
     verticalAlign: VerticalAlign.CENTER,
     margins: { top: 60, bottom: 60, left: 100, right: 100 },
     shading: head ? { type: ShadingType.CLEAR, color: 'auto', fill: COLOR.headFill } : undefined,
-    children: String(text).split('\n').map((line) => new Paragraph({
+    // 칸 값: 문자열(줄바꿈 \n 가능) 또는 줄 배열(각 줄은 문자열이나 런 배열 — 링크·아이콘 포함)
+    children: (Array.isArray(text) ? text : String(text).split('\n')).map((line) => new Paragraph({
       style: head ? 'TableHead' : 'TableText',
+      keepNext: keep,
       alignment: head ? AlignmentType.CENTER : (align && align[colIdx]) || AlignmentType.LEFT,
-      children: runs(line),
+      children: Array.isArray(line) ? line : runs(line, ro),
     })),
   });
   return new Table({
@@ -194,16 +221,35 @@ function table(headers, rows, widths, { align } = {}) {
     alignment: AlignmentType.CENTER,
     borders: { top: thick, bottom: thick, left: { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' }, right: { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' }, insideHorizontal: thin, insideVertical: thin },
     rows: [
-      new TableRow({ tableHeader: true, cantSplit: true, children: headers.map((h, i) => cell(h, widths[i], true, i)) }),
-      ...rows.map((r) => new TableRow({ cantSplit: true, children: r.map((c, i) => cell(c, widths[i], false, i)) })),
+      new TableRow({ tableHeader: true, cantSplit: true, children: headers.map((h, i) => cell(h, widths[i], true, i, together)) }),
+      ...rows.map((r, ri) => new TableRow({ cantSplit: true, children: r.map((c, i) => cell(c, widths[i], false, i, together && ri < rows.length - 1)) })),
     ],
   });
 }
 
 // 그림: 폭(mm) 기준으로 비율 유지해 넣음
-function figure(data, pxW, pxH, widthMm, type = 'png') {
+// 이미지 크기·형식(PNG/JPEG) 판별
+function imageInfo(data) {
+  if (data.readUInt32BE(0) === 0x89504e47) return { type: 'png', w: data.readUInt32BE(16), h: data.readUInt32BE(20) };
+  if (data[0] === 0xff && data[1] === 0xd8) {
+    let i = 2;
+    while (i < data.length) {
+      const marker = data[i + 1];
+      const len = data.readUInt16BE(i + 2);
+      if (marker >= 0xc0 && marker <= 0xcf && ![0xc4, 0xc8, 0xcc].includes(marker)) {
+        return { type: 'jpg', h: data.readUInt16BE(i + 5), w: data.readUInt16BE(i + 7) };
+      }
+      i += 2 + len;
+    }
+  }
+  throw new Error('지원하지 않는 이미지 형식');
+}
+
+// 그림: 폭(mm) 기준으로 비율 유지해 넣음
+function figure(data, widthMm) {
+  const { type, w, h } = imageInfo(data);
   const wPx = Math.round(widthMm * 3.78); // 96dpi 기준 mm→px
-  const hPx = Math.round(wPx * pxH / pxW);
+  const hPx = Math.round(wPx * h / w);
   return new Paragraph({ style: 'Figure', children: [new ImageRun({ type, data, transformation: { width: wPx, height: hPx } })] });
 }
 
@@ -260,6 +306,6 @@ const bodySection = (children) => ({
 
 module.exports = {
   SERIF, SANS, HUFS_B, HUFS_M, HUFS_L, font, MM, PAGE, CONTENT_WIDTH, COLOR, styles, numbering,
-  runs, H, P, B, NOTE, SOURCE, tableCaption, figureCaption, table, figure,
+  runs, H, P, B, GAP, NOTE, SOURCE, tableCaption, figureCaption, table, figure, imageInfo,
   headers, footers, frontSection, bodySection, figurePlaceholder, HeightRule,
 };
