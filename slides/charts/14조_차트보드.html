@@ -108,6 +108,10 @@ tr.top5 td { background: var(--band); }
 .gu-btn.on { background: var(--ink); color: var(--card); }
 .mv { font-size: 12px; font-weight: 700; }
 .mv.up { color: var(--up); } .mv.down { color: var(--down); } .mv.flat { color: var(--muted); font-weight: 500; }
+.abs-rk { font-size: 12px; color: var(--muted); }
+.sub2 { display: block; font-size: 11px; color: var(--muted); margin-top: 1px; }
+.sub2 .mv { font-size: 11px; }
+.tbl-note { margin-top: 8px; line-height: 1.6; }
 footer.note { font-size: 12px; color: var(--muted); line-height: 1.6; }
 #tip { position: fixed; z-index: 10; pointer-events: none; background: var(--card); color: var(--ink); border: 1px solid var(--rule); border-radius: 10px;
   padding: 10px 12px; font-size: 13px; line-height: 1.55; box-shadow: 0 6px 20px rgba(0,0,0,.15); min-width: 210px; font-variant-numeric: tabular-nums; }
@@ -199,6 +203,7 @@ body.export #exportFrame { display: grid; width: 1600px; height: 900px; box-sizi
   <details open>
     <summary>순위표 <span>— 같은 순위끼리 한 줄: 절대 순위와 비중(분모 보정함) 순위 나란히</span></summary>
     <div class="tbl"><table id="tbl"></table></div>
+    <p class="hint tbl-note">▲ = 비중 순위가 그 기준보다 높음, ▼ = 낮음. ‘보정 전 대비’는 분모 결측 보정 전 비중 순위와, ‘절대 순위 대비’는 같은 구의 절대(10대 합계) 순위와 비교한 계단 수입니다. 절대 대비 ▲가 크면 집중형(적지만 몰려 있음), ▼가 크면 규모형(많지만 희석)입니다.</p>
   </details>
   <footer class="note">데이터: 교육용으로 오류가 의도적으로 삽입된 가공 데이터(서울시 생활인구 형식, 기준일 2026-04-15 하루) — 실제 서울시 공식 통계가 아닙니다. 생활인구는 그 시각 그 구에 있던 사람 수이며 거주인구가 아닙니다. '15~18시'는 시간대 값 15·16·17(각 1시간) 3개 구간입니다.</footer>
 </div>
@@ -599,13 +604,16 @@ function renderTable() {
   const byAbs = [...D].sort((a, b) => absRank[a.gu] - absRank[b.gu]);
   const bySh = [...D].sort((a, b) => rI[a.gu] - rI[b.gu]);
   const btn = d => `<button type="button" class="gu-btn${cat(d, "imp") === "both" ? " both" : ""}${state.sel === d.gu ? " on" : ""}" data-sel="${d.gu}">${d.gu}</button>`;
-  const mv = d => { const diff = rSk[d.gu] - rI[d.gu]; return diff > 0 ? `<span class="mv up">▲${diff}</span>` : diff < 0 ? `<span class="mv down">▼${-diff}</span>` : `<span class="mv flat">–</span>`; };
+  const arrow = diff => diff > 0 ? `<span class="mv up">▲${diff}</span>` : diff < 0 ? `<span class="mv down">▼${-diff}</span>` : `<span class="mv flat">–</span>`;
+  const mvSkip = d => arrow(rSk[d.gu] - rI[d.gu]);
+  const mvAbs = d => arrow(absRank[d.gu] - rI[d.gu]);
   const M = isMobile();
-  let h = `<thead><tr><th></th><th class="grp sep" colspan="2">절대 · 10대 합계</th><th class="grp sep" colspan="${M ? 2 : 3}">비중 · 전 연령 대비 10대 (분모 보정함)</th></tr>
-    <tr><th>순위</th><th class="sep">자치구</th><th class="num">명</th><th class="sep">자치구</th><th class="num">%</th>${M ? "" : "<th class=\"num\">보정 전 대비</th>"}</tr></thead><tbody>`;
+  let h = `<thead><tr><th></th><th class="grp sep" colspan="2">절대 · 10대 합계</th><th class="grp sep" colspan="${M ? 2 : 4}">비중 · 전 연령 대비 10대 (분모 보정함)</th></tr>
+    <tr><th>순위</th><th class="sep">자치구</th><th class="num">명</th><th class="sep">자치구</th><th class="num">%</th>${M ? "" : "<th class=\"num\">보정 전 대비</th><th class=\"num\">절대 순위 대비</th>"}</tr></thead><tbody>`;
   for (let i = 0; i < 25; i++) {
     const a = byAbs[i], s = bySh[i];
-    h += `<tr class="${i < 5 ? "top5" : ""}"><td class="rk">${i + 1}</td><td class="sep">${btn(a)}</td><td class="num">${fmt(a.abs)}</td><td class="sep">${btn(s)}${M ? " " + mv(s) : ""}</td><td class="num">${s.share.toFixed(2)}</td>${M ? "" : `<td class="num">${mv(s)}</td>`}</tr>`;
+    const subline = M ? `<span class="sub2">보정 전 ${mvSkip(s)} · 절대 ${mvAbs(s)}</span>` : "";
+    h += `<tr class="${i < 5 ? "top5" : ""}"><td class="rk">${i + 1}</td><td class="sep">${btn(a)}</td><td class="num">${fmt(a.abs)}</td><td class="sep">${btn(s)}${subline}</td><td class="num">${s.share.toFixed(2)}</td>${M ? "" : `<td class="num">${mvSkip(s)}</td><td class="num">${mvAbs(s)} <span class="abs-rk">(절대 ${absRank[s.gu]}위)</span></td>`}</tr>`;
   }
   document.getElementById("tbl").innerHTML = h + "</tbody>";
 }
