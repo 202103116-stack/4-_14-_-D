@@ -30,7 +30,7 @@ const REPO = 'https://github.com/202103116-stack/youth-space-seoul-analysis';
 const NOTEBOOK_URL = encodeURI(REPO + '/blob/master/notebook/4주차_14조_미션D.ipynb');
 const NOTEBOOKS = [
   ['정승엽', COLAB],
-  ['박유진', 'https://colab.research.google.com/drive/1LY8SfApp4RknsVAmKBe6rwN2XrSEHOP4'],
+  ['박유진', 'https://colab.research.google.com/drive/1vECDVyUDA5yYA3-BQ-968sgArwhrfqEx?usp=sharing'],
   ['신효주', 'https://colab.research.google.com/drive/1r9l3rH5k9iKnY6WvNUowZMSn0afA6ni2?usp=sharing'],
 ];
 const link = (text, url, size = 20) => new ExternalHyperlink({ link: url, children: [new TextRun({ text, font: S.font(S.SANS), size, color: '0563C1', underline: {} })] });
